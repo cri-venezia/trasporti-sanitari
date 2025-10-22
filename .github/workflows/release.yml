@@ -14,6 +14,9 @@ jobs:
         name: Build and Release Plugin Zip
         # Sistema operativo su cui eseguire il job
         runs-on: ubuntu-latest
+        # Aggiunge i permessi necessari per creare la release e caricare l'asset
+        permissions:
+            contents: write
 
         # Passaggi del job
         steps:
@@ -62,3 +65,4 @@ jobs:
                   # body: |
                   #   Release della versione ${{ github.ref_name }} del plugin CRIVE Trasporti.
                   # generate_release_notes: true
+
