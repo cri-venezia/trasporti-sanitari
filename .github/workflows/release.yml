@@ -1,7 +1,7 @@
-# Nome Workflow
+# Nome del Workflow
 name: Create Plugin Release
 
-# Trigger: si attiva quando viene pubblicato un nuovo tag che inizia con 'v' (es. v1.0.0)
+# Trigger: si attiva quando viene pubblicato un nuovo tag che inizia con 'v' (es. v1.0.0, v1.2.3)
 on:
     push:
         tags:
@@ -11,44 +11,47 @@ on:
 jobs:
     build_and_release:
         # Nome del Job
-        name: Build and Release Plugin ZIP
-        # Sistema Operativo su cui viene eseguito il job
+        name: Build and Release Plugin Zip
+        # Sistema operativo su cui eseguire il job
         runs-on: ubuntu-latest
 
+        # Passaggi del job
         steps:
-            # 1. Checkout del codice
-            - name: Checkout Code
+            # 1. Checkout del codice dal repository
+            - name: Checkout code
               uses: actions/checkout@v4
+
             # 2. Setup di PHP
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: '8.2' # come da requisiti minimi
-                  extensions: mbstring, zip # Estensioni di PHP necessarie
-                  coverage: none # Non serve coverage al momento
+                  php-version: '8.2' # Assicurati che corrisponda al tuo requisito minimo
+                  extensions: mbstring, zip # Estensioni PHP necessarie
+                  coverage: none # Non serve la code coverage
                   tools: composer # Installa Composer
-            # 3. Installa le dipendenze ( solo produzione )
+
+            # 3. Installa le dipendenze di Composer (solo produzione)
             - name: Install Composer dependencies
               run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-            # 4. Crea lo ZIP
+            # 4. Crea l'archivio ZIP del plugin
             - name: Create plugin archive
               run: |
                   # Nome della cartella del plugin (lo slug)
                   PLUGIN_SLUG="cri-trasporti"
-                  # Nome del file ZIP basato sul tag GIT
-                  ZIP_FILE=${PLUGIN_SLUG}-$(echo ${GITHUB_REF#refs/tags/}).zip"
+                  # Nome del file ZIP basato sul tag Git
+                  ZIP_FILE="${PLUGIN_SLUG}-$(echo ${GITHUB_REF#refs/tags/}).zip"
                   # Crea la directory di build temporanea
                   mkdir -p build/${PLUGIN_SLUG}
-                  # Copia i files necessari escludendo file e cartelle di sviluppo
-                  rsync -rc --exclude)'.git/' --exclude='.github/' --exclude='.editorconfig' --exclude='bin/' --exclude='assets/scss' --exclude='composer.json' --exclude='composer.lock' --exclude='README.md' --exclude='PROGRESSO.md' ./ build/${PLUGIN_SLUG}/
+                  # Copia i file necessari nell'archivio (escludendo file/cartelle di sviluppo)
+                  rsync -rc --exclude='.git/' --exclude='.github/' --exclude='.editorconfig' --exclude='bin/' --exclude='assets/scss/' --exclude='composer.json' --exclude='composer.lock' --exclude='README.md' --exclude='PROGRESSO.md' ./ build/${PLUGIN_SLUG}/
                   # Entra nella cartella di build e crea lo zip
                   cd build
-                  zip -r ../${ZIP_FILE} . /${PLUGIN_SLUG}
+                  zip -r ../${ZIP_FILE} ./${PLUGIN_SLUG}
                   cd ..
                   echo "ZIP_FILE_NAME=${ZIP_FILE}" >> $GITHUB_ENV
 
-            # 5. Crea la release
+            # 5. Crea la Release su GitHub e carica lo ZIP
             - name: Create GitHub Release
               uses: softprops/action-gh-release@v2
               with:
