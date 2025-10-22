@@ -39,7 +39,7 @@ jobs:
 
             # 4. Compila SCSS in CSS
             - name: Compile SCSS to CSS
-              run: composer compile-scss # Esegue il nostro script di compilazione
+              run: composer compile-sass # Esegue il nostro script di compilazione
 
             # 5. Crea l'archivio ZIP del plugin
             - name: Create plugin archive
