@@ -37,7 +37,11 @@ jobs:
             - name: Install Composer dependencies
               run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-            # 4. Crea l'archivio ZIP del plugin
+            # 4. Compila SCSS in CSS
+            - name: Compile SCSS to CSS
+              run: composer compile-scss # Esegue il nostro script di compilazione
+
+            # 5. Crea l'archivio ZIP del plugin
             - name: Create plugin archive
               run: |
                   # Nome della cartella del plugin (lo slug)
@@ -47,14 +51,14 @@ jobs:
                   # Crea la directory di build temporanea
                   mkdir -p build/${PLUGIN_SLUG}
                   # Copia i file necessari nell'archivio (escludendo file/cartelle di sviluppo)
-                  rsync -rc --exclude='.git/' --exclude='.github/' --exclude='.editorconfig' --exclude='bin/' --exclude='assets/scss/' --exclude='composer.json' --exclude='composer.lock' --exclude='renovate.json' --exclude='PROGRESSO.md' ./ build/${PLUGIN_SLUG}/
+                  rsync -rc --exclude='.git/' --exclude='.github/' --exclude='.editorconfig' --exclude='bin/' --exclude='assets/scss/' --exclude='composer.json' --exclude='composer.lock' --exclude='README.md' --exclude='PROGRESSO.md' --exclude='renovate.json' ./ build/${PLUGIN_SLUG}/
                   # Entra nella cartella di build e crea lo zip
                   cd build
                   zip -r ../${ZIP_FILE} ./${PLUGIN_SLUG}
                   cd ..
                   echo "ZIP_FILE_NAME=${ZIP_FILE}" >> $GITHUB_ENV
 
-            # 5. Crea la Release su GitHub e carica lo ZIP
+            # 6. Crea la Release su GitHub e carica lo ZIP
             - name: Create GitHub Release
               uses: softprops/action-gh-release@v2
               with:
