@@ -1,0 +1,61 @@
+# Nome Workflow
+name: Create Plugin Release
+
+# Trigger: si attiva quando viene pubblicato un nuovo tag che inizia con 'v' (es. v1.0.0)
+on:
+    push:
+        tags:
+            - 'v*'
+
+# Definisce i job da eseguire
+jobs:
+    build_and_release:
+        # Nome del Job
+        name: Build and Release Plugin ZIP
+        # Sistema Operativo su cui viene eseguito il job
+        runs-on: ubuntu-latest
+
+        steps:
+            # 1. Checkout del codice
+            - name: Checkout Code
+              uses: actions/checkout@v4
+            # 2. Setup di PHP
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.2' # come da requisiti minimi
+                  extensions: mbstring, zip # Estensioni di PHP necessarie
+                  coverage: none # Non serve coverage al momento
+                  tools: composer # Installa Composer
+            # 3. Installa le dipendenze ( solo produzione )
+            - name: Install Composer dependencies
+              run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+            # 4. Crea lo ZIP
+            - name: Create plugin archive
+              run: |
+                  # Nome della cartella del plugin (lo slug)
+                  PLUGIN_SLUG="cri-trasporti"
+                  # Nome del file ZIP basato sul tag GIT
+                  ZIP_FILE=${PLUGIN_SLUG}-$(echo ${GITHUB_REF#refs/tags/}).zip"
+                  # Crea la directory di build temporanea
+                  mkdir -p build/${PLUGIN_SLUG}
+                  # Copia i files necessari escludendo file e cartelle di sviluppo
+                  rsync -rc --exclude)'.git/' --exclude='.github/' --exclude='.editorconfig' --exclude='bin/' --exclude='assets/scss' --exclude='composer.json' --exclude='composer.lock' --exclude='README.md' --exclude='PROGRESSO.md' ./ build/${PLUGIN_SLUG}/
+                  # Entra nella cartella di build e crea lo zip
+                  cd build
+                  zip -r ../${ZIP_FILE} . /${PLUGIN_SLUG}
+                  cd ..
+                  echo "ZIP_FILE_NAME=${ZIP_FILE}" >> $GITHUB_ENV
+
+            # 5. Crea la release
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  # Il token GitHub viene fornito automaticamente dall'action
+                  # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Non è necessario specificarlo esplicitamente
+                  files: ${{ env.ZIP_FILE_NAME }} # Il file ZIP da allegare
+                  # Opzionale: puoi aggiungere una descrizione o generare note di rilascio
+                  # body: |
+                  #   Release della versione ${{ github.ref_name }} del plugin CRIVE Trasporti.
+                  # generate_release_notes: true

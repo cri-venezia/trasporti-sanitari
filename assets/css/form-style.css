@@ -1,0 +1,161 @@
+.elementor-widget-crive-transport-form .crive-transport-form {
+  font-family: "Arial", sans-serif;
+  color: #333;
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-progress-bar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  position: relative;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-progress-bar::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  height: 4px;
+  width: 100%;
+  background-color: #e0e0e0;
+  z-index: 1;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-progress-bar .progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  width: 33.33%;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-progress-bar .progress-step span {
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+  background-color: #fff;
+  border: 3px solid #e0e0e0;
+  color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-progress-bar .progress-step p {
+  margin-top: 5px;
+  font-size: 0.9em;
+  color: #999;
+  transition: color 0.3s ease;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-progress-bar .progress-step.active span {
+  background-color: #CC0000;
+  border-color: #CC0000;
+  color: #fff;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-progress-bar .progress-step.active p {
+  color: #CC0000;
+  font-weight: bold;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-progress-bar .progress-step.completed span {
+  background-color: #fff;
+  border-color: #CC0000;
+  color: #CC0000;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-progress-bar .progress-step.completed p {
+  color: #333;
+}
+.elementor-widget-crive-transport-form .crive-transport-form h2 {
+  color: #CC0000;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  font-size: 1.5em;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-step {
+  display: none;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-step.active {
+  display: block;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .conditional-field {
+  display: none;
+  border-left: 3px solid #f0f0f0;
+  padding-left: 15px;
+  margin-left: 5px;
+  margin-top: 10px;
+}
+.elementor-widget-crive-transport-form .crive-transport-form label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+.elementor-widget-crive-transport-form .crive-transport-form input, .elementor-widget-crive-transport-form .crive-transport-form select, .elementor-widget-crive-transport-form .crive-transport-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+}
+.elementor-widget-crive-transport-form .crive-transport-form input:focus, .elementor-widget-crive-transport-form .crive-transport-form select:focus, .elementor-widget-crive-transport-form .crive-transport-form textarea:focus {
+  border-color: #CC0000;
+  outline: none;
+  box-shadow: 0 0 5px rgba(204, 0, 0, 0.5);
+}
+.elementor-widget-crive-transport-form .crive-transport-form input[type=date], .elementor-widget-crive-transport-form .crive-transport-form input[type=time] {
+  -webkit-appearance: none;
+}
+.elementor-widget-crive-transport-form .crive-transport-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-navigation button {
+  background-color: #CC0000 !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  padding: 12px 25px !important;
+  border-radius: 5px !important;
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: background-color 0.3s ease;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-navigation button:hover {
+  background-color: #a30000 !important;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-navigation button:disabled {
+  background-color: #ccc !important;
+  cursor: not-allowed;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-navigation .prev-step {
+  background-color: #6c757d !important;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-navigation .prev-step:hover {
+  background-color: #5a6268 !important;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-messages .form-error {
+  color: #CC0000;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+.elementor-widget-crive-transport-form .crive-transport-form .form-success {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  padding: 15px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 1.2em;
+}
