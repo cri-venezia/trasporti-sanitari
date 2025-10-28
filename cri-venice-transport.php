@@ -7,8 +7,8 @@
  * Version:           1.0.0
  * Requires at least: 6.0
  * Requires PHP:      8.2
- * Author:            AHDCreative Web Solutions
- * Author URI:        https://ahd-creative.agency/
+ * Author:            Luca
+ * Author URI:        mailto:luca.forzutti@veneto.cri.it
  * License:           Proprietary
  * Text Domain:       cri-trasporti
  * Domain Path:       /languages
