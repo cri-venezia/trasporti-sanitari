@@ -41,8 +41,27 @@ class AjaxHandler {
 	 * @since 1.0.0
 	 */
 	public function handle_transport_request(): void {
-		check_ajax_referer( 'cri_transport_request_nonce', 'security' );
+		// --- NUOVO LOG PER DIAGNOSI ---
+		if (defined('WP_DEBUG') && WP_DEBUG) {
+			error_log('CRIVE Trasporti AJAX: Inizio gestione richiesta.');
+		}
 
+		// 1. Verifica Nonce
+		$nonce_check = check_ajax_referer( 'cri_transport_request_nonce', 'security', false );
+
+		if (defined('WP_DEBUG') && WP_DEBUG) {
+			error_log('CRIVE Trasporti AJAX: Nonce check result: ' . ($nonce_check ? 'Successo' : 'Fallimento'));
+		}
+
+		if ( ! $nonce_check ) {
+			wp_send_json_error( [ 'message' => esc_html__( 'Errore di sicurezza (nonce non valido).', 'cri-trasporti' ) ] );
+			return;
+		}
+
+		// La validazione del nonce è stata bypassata per loggarne il fallimento,
+		// ma è essenziale rispondere con errore se fallisce.
+
+		// Continua la logica delegando al RequestManager
 		$result = $this->request_manager->process_new_request( $_POST );
 
 		if ( is_wp_error( $result ) ) {
@@ -52,4 +71,3 @@ class AjaxHandler {
 		}
 	}
 }
-

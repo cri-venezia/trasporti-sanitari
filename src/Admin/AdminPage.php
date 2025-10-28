@@ -49,24 +49,28 @@ class AdminPage {
             </svg>'
 			);
 
+		// Crea la pagina principale
 		add_menu_page(
 			esc_html__( 'Richieste Trasporto', 'cri-trasporti' ),
 			esc_html__( 'Richieste Trasporto', 'cri-trasporti' ),
-			'edit_others_posts',
+			'edit_others_posts', // Capability per vedere l'elenco
 			$main_slug,
 			[ $this, 'render_list_page' ],
 			$icon_svg,
 			20
 		);
 
+		// Aggiunge la sotto-pagina "Aggiungi Nuova" (solo admin)
 		add_submenu_page(
 			$main_slug,
 			esc_html__( 'Aggiungi Nuova Richiesta', 'cri-trasporti' ),
 			esc_html__( 'Aggiungi Nuova', 'cri-trasporti' ),
-			'manage_options', // Solo amministratori
+			'manage_options', // Capability solo per amministratori
 			'crive-add-new-request',
 			[ $this, 'render_add_new_page' ]
 		);
+
+		// NOTA: La pagina "Impostazioni" viene aggiunta dalla classe SettingsPage.php
 	}
 
 	/**
@@ -105,7 +109,8 @@ class AdminPage {
 	 */
 	public function add_admin_styles(): void {
 		$screen = get_current_screen();
-		if ( $screen && $screen->id === 'toplevel_page_crive-transport-requests' ) {
+		// Assicura che lo stile venga applicato a tutte le pagine del plugin
+		if ( $screen && (str_starts_with($screen->id, 'toplevel_page_crive-transport-requests') || str_starts_with($screen->id, 'richieste-trasporto_page_')) ) {
 			echo '<style>
 				.wp-list-table .column-actions { width: 240px; }
 				.column-actions .button { margin-right: 5px; }
@@ -138,6 +143,7 @@ class AdminPage {
 
 		// Gestione azioni dalla tabella
 		if ( ! isset( $this->requests_table ) ) {
+			// Istanzia la tabella per poter accedere a current_action()
 			$this->requests_table = new RequestsListTable();
 		}
 
@@ -167,7 +173,7 @@ class AdminPage {
 			set_transient('crive_admin_notice', ['type' => 'success', 'message' => $message]);
 		}
 
-		// Reindirizza per evitare reinvio del form
+		// Reindirizza alla pagina elenco per evitare reinvio del form
 		wp_redirect(admin_url('admin.php?page=crive-transport-requests'));
 		exit;
 	}
@@ -195,13 +201,15 @@ class AdminPage {
 
 		$pdf_generator = new PDFGenerator();
 		$pdf_generator->stream($data, $request->id);
-		die();
+		die(); // Termina l'esecuzione dopo aver inviato il PDF
 	}
 
 	/**
 	 * Gestisce la richiesta di conferma del trasporto.
 	 */
 	private function handle_confirm_request(): never {
+		global $wpdb; // Aggiunta la dichiarazione globale mancante
+
 		$request_id = isset($_GET['request_id']) ? absint($_GET['request_id']) : 0;
 		check_admin_referer('crive_confirm_' . $request_id);
 
@@ -210,14 +218,23 @@ class AdminPage {
 		}
 
 		$request = $this->get_request_by_id($request_id);
+		// Se la richiesta non esiste o è già confermata, reindirizza senza fare nulla.
 		if ( ! $request || $request->status === RequestStatus::Confirmed->value ) {
+			wp_redirect( admin_url('admin.php?page=crive-transport-requests') );
+			exit;
+		}
+
+		// Controlla se l'email utente è valida prima di tentare l'invio
+		if ( ! is_email( $request->recapito_email ) ) {
+			set_transient('crive_admin_notice', ['type' => 'error', 'message' => esc_html__('Impossibile inviare email: L\'indirizzo email del richiedente non è valido.', 'cri-trasporti')]);
+			error_log('CRIVE Trasporti: Impossibile inviare email di conferma per richiesta ID ' . $request_id . '. Email richiedente non valida: ' . $request->recapito_email);
 			wp_redirect( admin_url('admin.php?page=crive-transport-requests') );
 			exit;
 		}
 
 		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 		$subject = esc_html__('Conferma Trasporto Sanitario - CRI Venezia', 'cri-trasporti');
-		$body = '<p>' . sprintf(esc_html__('Gentile %s,', 'cri-trasporti'), $request->nome_cognome) . '</p>';
+		$body = '<p>' . sprintf(esc_html__('Gentile %s,', 'cri-trasporti'), esc_html($request->nome_cognome)) . '</p>';
 		$body .= '<p>' . sprintf(esc_html__('Siamo lieti di confermare che il suo trasporto per il giorno %s è stato accettato e pianificato.', 'cri-trasporti'), wp_date(get_option('date_format'), strtotime($request->data_trasporto))) . '</p>';
 		$body .= '<p>' . esc_html__('Un nostro operatore la contatterà a breve per i dettagli finali.', 'cri-trasporti') . '</p>';
 		$body .= '<p>' . esc_html__('Cordiali saluti,', 'cri-trasporti') . '<br><strong>' . esc_html__('Croce Rossa Italiana - Comitato di Venezia', 'cri-trasporti') . '</strong></p>';
@@ -225,12 +242,12 @@ class AdminPage {
 		$sent = wp_mail($request->recapito_email, $subject, $body, $headers);
 
 		if ($sent) {
-			global $wpdb;
 			$table_name = $wpdb->prefix . 'crive_transport_requests';
 			$wpdb->update($table_name, ['status' => RequestStatus::Confirmed->value], ['id' => $request_id]);
 			set_transient('crive_admin_notice', ['type' => 'success', 'message' => esc_html__('Email di conferma inviata e richiesta aggiornata.', 'cri-trasporti')]);
 		} else {
 			set_transient('crive_admin_notice', ['type' => 'error', 'message' => esc_html__('Errore durante l\'invio dell\'email di conferma.', 'cri-trasporti')]);
+			error_log('CRIVE Trasporti: Invio email di conferma fallito per richiesta ID ' . $request_id . ' a ' . $request->recapito_email);
 		}
 
 		wp_redirect( admin_url('admin.php?page=crive-transport-requests') );
@@ -289,4 +306,3 @@ class AdminPage {
 		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table_name} WHERE id = %d", $id ) );
 	}
 }
-

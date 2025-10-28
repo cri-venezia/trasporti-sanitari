@@ -34,7 +34,13 @@ class RequestManager {
 			return new WP_Error('db_error', esc_html__( 'Si è verificato un errore durante il salvataggio della richiesta.', 'cri-trasporti' ));
 		}
 
-		$this->send_notifications( $sanitized_data, $insert_id );
+		// Prova a inviare le notifiche e controlla il risultato
+		$notifications_sent = $this->send_notifications( $sanitized_data, $insert_id );
+		if ( ! $notifications_sent ) {
+			// Opzionale: Logga l'errore se l'invio fallisce, ma non bloccare il processo principale.
+			error_log('CRIVE Trasporti: Invio notifiche fallito per richiesta ID ' . $insert_id);
+		}
+
 
 		return $insert_id;
 	}
@@ -127,18 +133,22 @@ class RequestManager {
 	 *
 	 * @param array $data Dati sanificati del form.
 	 * @param int $request_id ID della richiesta inserita nel DB.
-	 * @return void
+	 * @return bool True se entrambi gli invii (o almeno quello admin) sono andati a buon fine, false altrimenti.
 	 */
-	private function send_notifications( array $data, int $request_id ): void {
+	private function send_notifications( array $data, int $request_id ): bool {
 		$user_email    = $data['recapito_email'];
 		$notification_email = get_option('crive_notification_email');
-		$admin_email   = ! empty( $notification_email ) ? $notification_email : get_option( 'admin_email' );
+		// Assicura che l'email admin di fallback sia valida
+		$default_admin_email = get_option( 'admin_email' );
+		$admin_email   = ! empty( $notification_email ) && is_email($notification_email) ? $notification_email : (is_email($default_admin_email) ? $default_admin_email : null);
 
 		$headers       = [ 'Content-Type: text/html; charset=UTF-8' ];
+		$user_sent     = false;
+		$admin_sent    = false;
 
 		// 1. Email di conferma all'utente
 		$user_subject = esc_html__( 'Conferma Ricezione Richiesta di Trasporto', 'cri-trasporti' );
-		$user_body    = '<p>' . sprintf( esc_html__( 'Gentile %s,', 'cri-trasporti' ), $data['nome_cognome'] ) . '</p>';
+		$user_body    = '<p>' . sprintf( esc_html__( 'Gentile %s,', 'cri-trasporti' ), esc_html($data['nome_cognome']) ) . '</p>';
 		$user_body   .= '<p>' . esc_html__( 'La tua richiesta di trasporto è stata ricevuta correttamente e verrà elaborata al più presto. A breve verrai ricontattato da un nostro operatore per la conferma definitiva.', 'cri-trasporti' ) . '</p>';
 		$user_body   .= '<p>' . esc_html__( 'Riepilogo richiesta:', 'cri-trasporti' ) . '</p>';
 		$user_body   .= '<ul>';
@@ -147,24 +157,39 @@ class RequestManager {
 		$user_body   .= '</ul>';
 		$user_body   .= '<p><strong>' . esc_html__( 'Croce Rossa Italiana - Comitato di Venezia', 'cri-trasporti' ) . '</strong></p>';
 
-		wp_mail( $user_email, $user_subject, $user_body, $headers );
+		if ( is_email( $user_email ) ) {
+			$user_sent = wp_mail( $user_email, $user_subject, $user_body, $headers );
+			if ( ! $user_sent ) {
+				error_log('CRIVE Trasporti: Fallito invio email conferma utente per richiesta ID ' . $request_id . ' a ' . $user_email);
+			}
+		} else {
+			error_log('CRIVE Trasporti: Email utente non valida per richiesta ID ' . $request_id . ': ' . $user_email);
+		}
+
 
 		// 2. Email di notifica alla segreteria
+		if ( ! $admin_email ) {
+			error_log('CRIVE Trasporti: Nessuna email valida configurata per le notifiche admin.');
+			// Non possiamo inviare all'admin, ma potremmo voler comunque considerare l'invio all'utente come successo parziale
+			return $user_sent;
+		}
+
 		$admin_subject = sprintf( esc_html__( 'Nuova Richiesta di Trasporto #%d', 'cri-trasporti' ), $request_id );
 		$admin_body    = '<h1>' . sprintf( esc_html__( 'Nuova Richiesta di Trasporto #%d', 'cri-trasporti' ), $request_id ) . '</h1>';
 		$admin_body   .= '<p>' . esc_html__( 'È stata inviata una nuova richiesta di trasporto. Di seguito i dettagli:', 'cri-trasporti' ) . '</p>';
 
 		$admin_body .= '<ul>';
 		foreach ( $data as $key => $value ) {
-			if ( ! empty( $value ) ) {
+			if ( isset($value) && $value !== '' ) { // Mostra anche '0' ma non stringhe vuote o null
 				$label = ucwords( str_replace( '_', ' ', $key ) );
-				$display_value = is_array( $value ) ? wp_json_encode( $value ) : $value;
+				// Sanifica l'output per sicurezza anche nell'email
+				$display_value = is_array( $value ) ? esc_html( wp_json_encode( $value ) ) : esc_html( (string) $value );
 
 				if ( $key === 'ascensore' ) {
 					$display_value = $value ? 'Sì' : 'No';
 				}
 
-				$admin_body .= '<li><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $display_value ) . '</li>';
+				$admin_body .= '<li><strong>' . esc_html( $label ) . ':</strong> ' . $display_value . '</li>';
 			}
 		}
 		$admin_body .= '</ul>';
@@ -176,13 +201,21 @@ class RequestManager {
 		$attachments = [];
 		if ($pdf_path && file_exists($pdf_path)) {
 			$attachments[] = $pdf_path;
+		} else {
+			error_log('CRIVE Trasporti: Fallita generazione o accesso al PDF per richiesta ID ' . $request_id);
 		}
 
-		wp_mail( $admin_email, $admin_subject, $admin_body, $headers, $attachments );
+		$admin_sent = wp_mail( $admin_email, $admin_subject, $admin_body, $headers, $attachments );
+		if ( ! $admin_sent ) {
+			error_log('CRIVE Trasporti: Fallito invio email notifica admin per richiesta ID ' . $request_id . ' a ' . $admin_email);
+		}
+
 
 		if ($pdf_path && file_exists($pdf_path)) {
 			wp_delete_file($pdf_path);
 		}
+
+		// Ritorna true se almeno l'email admin è stata inviata (o non richiesta), altrimenti false.
+		return $admin_sent;
 	}
 }
-
