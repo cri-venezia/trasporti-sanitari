@@ -7,14 +7,15 @@
  * Version:           1.0.0
  * Requires at least: 6.0
  * Requires PHP:      8.2
- * Author:            Luca
- * Author URI:        mailto:luca.forzutti@veneto.cri.it
+ * Author:            AHDCreative Web Solutions
+ * Author URI:        https://ahd-creative.agency/
  * License:           Proprietary
  * Text Domain:       cri-trasporti
  * Domain Path:       /languages
  */
 
 use CRIVenice\Transport\Includes\Database;
+use CRIVenice\Transport\Includes\RoleManager;
 use CRIVenice\Transport\Plugin;
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
@@ -26,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! defined( 'CRI_TRASPORTI_FILE' ) ) {
 	define( 'CRI_TRASPORTI_FILE', __FILE__ );
 	define( 'CRI_TRASPORTI_PATH', plugin_dir_path( __FILE__ ) );
-	define( 'CRI_TRASPORTI_VERSION', '1.0.0' );
+	define( 'CRI_TRASPORTI_VERSION', '1.0.0' ); // La versione corrente del plugin
 }
 
 // 2. Carica l'autoloader di Composer.
@@ -45,28 +46,30 @@ if ( ! file_exists( $autoloader ) ) {
 }
 require_once $autoloader;
 
-// 3. Inizializza il sistema di auto-aggiornamento da GitHub
+// 3. Inizializza il sistema di auto-aggiornamento da GitHub.
 try {
 	$myUpdateChecker = PucFactory::buildUpdateChecker(
-		'https://github.com/cri-venezia/trasporti-sanitari',
-		CRI_TRASPORTI_FILE,
-		'cri-trasporti'
+		'https://github.com/cri-venezia/trasporti-sanitari', // <-- SOSTITUISCI CON IL TUO REPO
+		CRI_TRASPORTI_FILE, // Percorso del file principale del plugin
+		'cri-trasporti' // Lo slug del plugin (nome cartella)
 	);
 
-	// Opzionale: il branch da cui prelevare l'aggiornamento
-	$myUpdateChecker->setBranch('main');
+	// Opzionale: Imposta il branch da cui controllare gli aggiornamenti (es: 'main', 'master'). Default è 'master'.
+	// $myUpdateChecker->setBranch('main');
 
-	// Token per accesso - Non necessario al momento
-	// $myUpdateChecker->setAuthentication('');
+	// Opzionale: Se il repository è privato, devi fornire un token di accesso.
+	// $myUpdateChecker->setAuthentication('IL_TUO_GITHUB_ACCESS_TOKEN');
+
 } catch (LogicException $e) {
-	// Gestisce eventuali errori durante l'inizializzazione del sistema update checker
-	add_action('admin_notices', function () use ($e) {
-		echo '<div class="error"><p>Errore inizializzazione update checker:' . esc_html__($e->getMessage()) . '</p></div>';
+	// Gestisce eventuali errori durante l'inizializzazione dell'update checker
+	add_action('admin_notices', function() use ($e) {
+		echo '<div class="error"><p>Errore nell\'inizializzazione dell\'update checker: ' . esc_html($e->getMessage()) . '</p></div>';
 	});
 }
 
+
 // 4. Registra gli hook di attivazione e disattivazione.
-register_activation_hook( CRI_TRASPORTI_FILE, [ Database::class, 'create_table' ] );
+register_activation_hook( CRI_TRASPORTI_FILE, [ Plugin::class, 'activate' ] );
 register_deactivation_hook( CRI_TRASPORTI_FILE, [ Plugin::class, 'deactivate' ] );
 
 
