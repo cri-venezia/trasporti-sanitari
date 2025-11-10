@@ -38,6 +38,8 @@ class AdminPage {
 		add_action( 'admin_init', [ $this, 'handle_actions' ] );
 		add_action( 'admin_notices', [ $this, 'show_notices' ] );
 		add_action( 'admin_head', [ $this, 'add_admin_styles' ] );
+		// Aggiunge il link alla barra di amministrazione
+		add_action( 'admin_bar_menu', [ $this, 'add_admin_bar_link' ], 999 );
 	}
 
 	/**
@@ -370,5 +372,25 @@ class AdminPage {
 			) . '</p>';
 		echo '<p><a href="https://docs.crivenezia.it/cri-trasporti/" target="_blank">' . esc_html__( 'Documentazione', 'cri-trasporti' ) . '</a> | ' . sprintf(esc_html__('Versione %s', 'cri-trasporti'), $plugin_version) . '</p>';
 		echo '</div>';
+	}
+
+	/**
+	 * Aggiunge un link rapido alla barra di amministrazione per gli operatori.
+	 *
+	 * @param \WP_Admin_Bar $wp_admin_bar
+	 * @return void
+	 */
+	public function add_admin_bar_link( \WP_Admin_Bar $wp_admin_bar ): void {
+		// Mostra solo se l'utente ha la nostra capability ma NON è un admin
+		if ( current_user_can( self::CAPABILITY ) && ! current_user_can( 'manage_options' ) ) {
+			$wp_admin_bar->add_node( [
+				'id'    => 'crive-trasporti-link',
+				'title' => esc_html__( 'Richieste Trasporti', 'cri-trasporti' ),
+				'href'  => admin_url( 'admin.php?page=crive-transport-requests' ),
+				'meta'  => [
+					'class' => 'crive-trasporti-admin-bar-link',
+				],
+			] );
+		}
 	}
 }
