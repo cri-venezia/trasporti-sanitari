@@ -955,15 +955,15 @@
         },
         {
             "name": "wpackagist-plugin/translatepress-multilingual",
-            "version": "3.0.1",
+            "version": "3.0.5",
             "source": {
                 "type": "svn",
                 "url": "https://plugins.svn.wordpress.org/translatepress-multilingual/",
-                "reference": "tags/3.0.1"
+                "reference": "tags/3.0.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/translatepress-multilingual.3.0.1.zip"
+                "url": "https://downloads.wordpress.org/plugin/translatepress-multilingual.3.0.5.zip"
             },
             "require": {
                 "composer/installers": "^1.0 || ^2.0"
@@ -981,5 +981,5 @@
         "php": ">=8.2"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
