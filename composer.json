@@ -22,7 +22,7 @@
 		}
 	],
 	"require": {
-		"php": ">=8.2",
+		"php": ">=8.4",
 		"tecnickcom/tcpdf": "^6.10",
 		"yahnis-elsts/plugin-update-checker": "^5.6",
 		"scssphp/scssphp": "^2.0"
@@ -30,7 +30,6 @@
 	"require-dev": {
 		"wpackagist-plugin/elementor": "*",
 		"wpackagist-plugin/translatepress-multilingual": "*"
-
 	},
 	"autoload": {
 		"psr-4": {

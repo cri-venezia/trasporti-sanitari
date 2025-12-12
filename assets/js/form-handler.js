@@ -65,8 +65,20 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 
 		const ascensoreSelect = form.querySelector('select[name="ascensore"]');
-		if (ascensoreSelect && ascensoreSelect.value === 'no' && form.querySelector('select[name="luogo_intervento"]').value === 'domicilio') {
-			form.querySelector('#scale-fields').style.display = 'block';
+		if (ascensoreSelect && form.querySelector('select[name="luogo_intervento"]').value === 'domicilio') {
+			if (ascensoreSelect.value === 'presente') {
+				const ascensoreDetails = form.querySelector('#ascensore-details-fields');
+				if (ascensoreDetails) ascensoreDetails.style.display = 'block';
+			} else if (ascensoreSelect.value === 'assente') {
+				const scaleFields = form.querySelector('#scale-fields');
+				if (scaleFields) scaleFields.style.display = 'block';
+			}
+		}
+
+		const trasportoPrecedenteSelect = form.querySelector('select[name="trasporto_precedente"]');
+		if (trasportoPrecedenteSelect && trasportoPrecedenteSelect.value === 'si') {
+			const attrezzaturaFields = form.querySelector('#attrezzatura-precedente-fields');
+			if (attrezzaturaFields) attrezzaturaFields.style.display = 'block';
 		}
 	}
 

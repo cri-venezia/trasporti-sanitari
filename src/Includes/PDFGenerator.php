@@ -4,18 +4,20 @@ namespace CRIVenice\Transport\Includes;
 
 use TCPDF;
 
-if ( ! defined( 'ABSPATH' ) ) {
+if (! defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
 }
 
 /**
  * Classe personalizzata per estendere TCPDF e definire header/footer.
  */
-class CriveTCPDF extends TCPDF {
+class CriveTCPDF extends TCPDF
+{
 	public string $primary_logo_url = 'https://crive.b-cdn.net/wp-content/uploads/2024/09/h60-scuro-1.png';
 	public string $fallback_logo_url = ''; // Lasciato vuoto come da richiesta
 
-	public function Header(): void {
+	public function Header(): void
+	{
 		$this->render_logo();
 
 		// Font e Titoli
@@ -27,11 +29,12 @@ class CriveTCPDF extends TCPDF {
 		$this->Line(28, 113, 567, 113); // Linea in pixel
 	}
 
-	public function Footer(): void {
+	public function Footer(): void
+	{
 		$this->SetY(-42);
 		$this->SetFont('helvetica', 'I', 8);
 		$this->Line(28, $this->GetY() - 14, 567, $this->GetY() - 14);
-		$timestamp = wp_date( get_option('date_format') . ' ' . get_option('time_format') );
+		$timestamp = wp_date(get_option('date_format') . ' ' . get_option('time_format'));
 		$footer_text = sprintf(
 			'Documento generato automaticamente dal sito crivenezia.it il %s',
 			$timestamp
@@ -42,10 +45,11 @@ class CriveTCPDF extends TCPDF {
 	/**
 	 * Renderizza il logo con logica di fallback.
 	 */
-	private function render_logo(): void {
+	private function render_logo(): void
+	{
 		$imageData = @file_get_contents($this->primary_logo_url);
 
-		if ( ! $imageData && ! empty($this->fallback_logo_url) ) {
+		if (! $imageData && ! empty($this->fallback_logo_url)) {
 			$imageData = @file_get_contents($this->fallback_logo_url);
 		}
 
@@ -64,7 +68,8 @@ class CriveTCPDF extends TCPDF {
  *
  * @since 1.0.0
  */
-class PDFGenerator {
+class PDFGenerator
+{
 
 	/**
 	 * Genera e salva un file PDF per una data richiesta.
@@ -73,7 +78,8 @@ class PDFGenerator {
 	 * @param int $request_id ID della richiesta.
 	 * @return string|false Percorso del file PDF generato o false in caso di errore.
 	 */
-	public function generate( array $data, int $request_id ): string|false {
+	public function generate(array $data, int $request_id): string|false
+	{
 		$pdf = $this->create_pdf_instance($data, $request_id);
 		$upload_dir = wp_upload_dir();
 		$pdf_path = $upload_dir['basedir'] . "/cri-requests/request-$request_id.pdf";
@@ -96,7 +102,8 @@ class PDFGenerator {
 	 * @param array $data Dati della richiesta.
 	 * @param int $request_id ID della richiesta.
 	 */
-	public function stream( array $data, int $request_id ): never {
+	public function stream(array $data, int $request_id): never
+	{
 		$pdf = $this->create_pdf_instance($data, $request_id);
 		$pdf->Output("richiesta-{$request_id}.pdf", 'I');
 		die();
@@ -133,7 +140,7 @@ class PDFGenerator {
 
 		// Titolo del documento
 		$pdf->SetFont('', 'B', 12);
-		$pdf->Cell(0, 28, "Riepilogo Richiesta N. $request_id del " . wp_date( get_option('date_format') ), 0, 1, 'L');
+		$pdf->Cell(0, 28, "Riepilogo Richiesta N. $request_id del " . wp_date(get_option('date_format')), 0, 1, 'L');
 		$pdf->Ln(14);
 
 		// Costruisce e renderizza le sezioni del contenuto
@@ -202,13 +209,27 @@ class PDFGenerator {
 					'Nome Struttura' => $data['nome_struttura'] ?? ''
 				],
 				'domicilio' => $location_details += [
-					                                    'Piano' => $data['piano'] ?? '',
-					                                    'Ascensore' => isset($data['ascensore']) && $data['ascensore'] ? 'Sì' : 'No',
-				                                    ] + (!($data['ascensore'] ?? true) ? ['Larghezza Scale' => $data['larghezza_scale'] ?? ''] : []),
+					'Piano' => $data['piano'] ?? '',
+					'Ascensore' => ucfirst($data['ascensore'] ?? 'assente'),
+				] +
+					($data['ascensore'] === 'presente' ? ['Dettagli Ascensore' => ucfirst($data['dettagli_ascensore'] ?? '')] : []) +
+					($data['ascensore'] === 'assente' ? ['Dettagli Scale' => ucfirst($data['dettagli_scale'] ?? '')] : []),
 				default => null,
 			};
 		}
 		$structure['Luogo Intervento'] = $location_details;
+
+		// Sezione 4: Trasporto Precedente (Nuova Sezione)
+		$previous_transport_details = [];
+		if (isset($data['trasporto_precedente'])) {
+			$previous_transport_details['Siamo già venuti?'] = $data['trasporto_precedente'];
+			if ($data['trasporto_precedente'] === 'Sì' && !empty($data['attrezzatura_precedente'])) {
+				$previous_transport_details['Attrezzatura Usata'] = $data['attrezzatura_precedente'];
+			}
+		}
+		if (!empty($previous_transport_details)) {
+			$structure['Info Trasporti Precedenti'] = $previous_transport_details;
+		}
 
 		// Sezione 4: Dati Paziente
 		$structure['Dati Paziente'] = [
@@ -223,7 +244,8 @@ class PDFGenerator {
 	/**
 	 * Renderizza una singola sezione del PDF.
 	 */
-	private function render_section(TCPDF $pdf, string $title, array $details): void {
+	private function render_section(TCPDF $pdf, string $title, array $details): void
+	{
 		if (empty(array_filter($details))) return;
 
 		$pdf->SetFont('', 'B', 12);
@@ -239,8 +261,9 @@ class PDFGenerator {
 		$pdf->Ln(23);
 	}
 
-	private function get_motivo_label(string $value): string {
-		return match($value) {
+	private function get_motivo_label(string $value): string
+	{
+		return match ($value) {
 			'visita' => 'Visita',
 			'trasferimento' => 'Trasferimento fra Strutture',
 			'ricovero' => 'Ricovero',
@@ -250,8 +273,9 @@ class PDFGenerator {
 		};
 	}
 
-	private function get_luogo_label(string $value): string {
-		return match($value) {
+	private function get_luogo_label(string $value): string
+	{
+		return match ($value) {
 			'domicilio' => 'Domicilio',
 			'rsa' => 'RSA',
 			'ambulatorio' => 'Ambulatorio',
@@ -260,4 +284,3 @@ class PDFGenerator {
 		};
 	}
 }
-
