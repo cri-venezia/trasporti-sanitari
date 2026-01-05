@@ -127,18 +127,44 @@ class RequestsListTable extends WP_List_Table {
 	 * @param array $item
 	 * @return string
 	 */
+	/**
+	 * Definisce il rendering per la colonna stato.
+	 *
+	 * @param array $item
+	 * @return string
+	 */
+	protected function column_status( $item ): string {
+		$status = RequestStatus::from($item['status']);
+		$label = $status->label();
+		
+		$class = match($status) {
+			RequestStatus::Pending => 'tw-bg-yellow-100 tw-text-yellow-800 tw-border-yellow-200',
+			RequestStatus::Confirmed => 'tw-bg-green-100 tw-text-green-800 tw-border-green-200',
+		};
+
+		return sprintf(
+			'<span class="tw-inline-flex tw-items-center tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-xs tw-font-medium tw-border %s">%s</span>',
+			$class,
+			$label
+		);
+	}
+
+	/**
+	 * Definisce il rendering per la colonna delle azioni.
+	 *
+	 * @param array $item
+	 * @return string
+	 */
 	protected function column_actions($item): string {
 		$page_slug = 'crive-transport-requests';
 		$actions = [];
 
 		// Pulsante Visualizzazione Rapida (JS)
-		// codifichiamo i dettagli in JSON per il data-attribute
 		$details_json = $item['dettagli_trasporto'] ?? '{}';
-		// Assicuriamoci che sia un JSON valido, altrimenti defaultiamo a oggetto vuoto
 		if (empty($details_json)) $details_json = '{}';
 		
 		$actions[] = sprintf(
-			'<button type="button" class="button button-secondary view-details-btn" data-details="%s" title="%s"><span class="dashicons dashicons-visibility" style="margin-top: 3px;"></span></button>',
+			'<button type="button" class="view-details-btn tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-mr-1 tw-bg-blue-50 tw-text-blue-600 tw-rounded-full hover:tw-bg-blue-100 hover:tw-text-blue-700 tw-transition-colors" data-details="%s" title="%s"><i class="fa-regular fa-eye"></i></button>',
 			esc_attr($details_json),
 			esc_attr__('Vedi Dettagli Rapidi', 'cri-trasporti')
 		);
@@ -147,7 +173,7 @@ class RequestsListTable extends WP_List_Table {
 		if (current_user_can('manage_options')) {
 			$edit_url = admin_url("admin.php?page={$page_slug}&action=edit_request&request_id=" . $item['id']);
 			$actions[] = sprintf(
-				'<a href="%s" class="button button-secondary" title="%s"><span class="dashicons dashicons-edit" style="margin-top: 3px;"></span></a>',
+				'<a href="%s" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-mr-1 tw-bg-gray-50 tw-text-gray-600 tw-rounded-full hover:tw-bg-gray-100 hover:tw-text-gray-900 tw-transition-colors" title="%s"><i class="fa-solid fa-pencil"></i></a>',
 				esc_url($edit_url),
 				esc_attr__('Modifica Richiesta', 'cri-trasporti')
 			);
@@ -155,19 +181,32 @@ class RequestsListTable extends WP_List_Table {
 
 		// Pulsante Vedi PDF
 		$view_pdf_url = wp_nonce_url(admin_url("admin.php?page={$page_slug}&action=view_pdf&request_id=" . $item['id']), 'crive_view_pdf_' . $item['id']);
-		$actions[] = sprintf('<a href="%s" class="button button-secondary" target="_blank" title="%s">%s</a>', esc_url($view_pdf_url), esc_attr__('Scarica PDF', 'cri-trasporti'), esc_html__('PDF', 'cri-trasporti'));
+		$actions[] = sprintf(
+			'<a href="%s" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-mr-1 tw-bg-red-50 tw-text-red-600 tw-rounded-full hover:tw-bg-red-100 hover:tw-text-red-700 tw-transition-colors" target="_blank" title="%s"><i class="fa-regular fa-file-pdf"></i></a>', 
+			esc_url($view_pdf_url), 
+			esc_attr__('Scarica PDF', 'cri-trasporti')
+		);
 
 		// Pulsante Conferma (condizionale)
 		if ($item['status'] === RequestStatus::Pending->value) {
 			$confirm_url = wp_nonce_url(admin_url("admin.php?page={$page_slug}&action=confirm_request&request_id=" . $item['id']), 'crive_confirm_' . $item['id']);
-			$actions[] = sprintf('<a href="%s" class="button button-primary">%s</a>', esc_url($confirm_url), esc_html__('Conferma', 'cri-trasporti'));
+			$actions[] = sprintf(
+				'<a href="%s" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-mr-1 tw-bg-green-50 tw-text-green-600 tw-rounded-full hover:tw-bg-green-100 hover:tw-text-green-700 tw-transition-colors" title="%s"><i class="fa-solid fa-check"></i></a>', 
+				esc_url($confirm_url), 
+				esc_html__('Conferma', 'cri-trasporti')
+			);
 		}
 
 		// Pulsante Cancella
 		$delete_url = wp_nonce_url(admin_url("admin.php?page={$page_slug}&action=delete_request&request_id=" . $item['id']), 'crive_delete_' . $item['id']);
-		$actions[] = sprintf('<a href="%s" class="button button-link-delete">%s</a>', esc_url($delete_url), esc_html__('Cancella', 'cri-trasporti'));
+		$actions[] = sprintf(
+			'<a href="%s" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-mr-1 tw-bg-red-50 tw-text-red-600 tw-rounded-full hover:tw-bg-red-600 hover:tw-text-white tw-transition-colors" onclick="return confirm(\'%s\');" title="%s"><i class="fa-solid fa-trash"></i></a>', 
+			esc_url($delete_url), 
+			esc_js(__('Sei sicuro di voler cancellare questa richiesta?', 'cri-trasporti')),
+			esc_html__('Cancella', 'cri-trasporti')
+		);
 
-		return implode(' ', $actions);
+		return '<div class="tw-flex tw-items-center">' . implode('', $actions) . '</div>';
 	}
 
 	/**

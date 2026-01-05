@@ -5,8 +5,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!modal) return;
 
+    // Modifica logica apertura/chiusura per usare classi Tailwind
+    function openModal() {
+        modal.classList.remove('tw-hidden');
+        modal.classList.add('tw-flex');
+    }
+
+    function closeModal() {
+        modal.classList.add('tw-hidden');
+        modal.classList.remove('tw-flex');
+    }
+
     // Delegate click event for the dynamically generated buttons
     document.querySelector('.wp-list-table').addEventListener('click', function (e) {
+        // Cerca il pulsante o un suo genitore
         const btn = e.target.closest('.view-details-btn');
         if (btn) {
             e.preventDefault();
@@ -15,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 const data = JSON.parse(rawData);
                 populateModal(data);
-                modal.classList.add('open');
+                openModal();
             } catch (error) {
                 console.error('Errore nel parsing dei dati JSON', error);
                 alert('Impossibile caricare i dettagli.');
@@ -23,19 +35,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    closeBtn.addEventListener('click', function () {
-        modal.classList.remove('open');
-    });
+    closeBtn.addEventListener('click', closeModal);
 
     window.addEventListener('click', function (e) {
         if (e.target === modal) {
-            modal.classList.remove('open');
+            closeModal();
         }
     });
 
     function populateModal(data) {
-        let html = '<table class="crive-details-table">';
+        let html = '<div class="tw-overflow-hidden tw-border tw-border-gray-200 tw-rounded-lg"><table class="tw-min-w-full tw-divide-y tw-divide-gray-200">';
 
+        let isAlt = false;
         for (const [key, value] of Object.entries(data)) {
             // Salta campi vuoti o tecnici se necessario
             if (value === '' || value === null) continue;
@@ -53,26 +64,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 'indirizzo_intervento': 'Indirizzo Ritiro',
                 'indirizzo_destinazione': 'Indirizzo Destinazione',
                 'struttura_da': 'Da Struttura',
-                'struttura_a': 'A Struttura'
+                'struttura_a': 'A Struttura',
+                'piano': 'Piano',
+                'ascensore': 'Ascensore',
+                'dettagli_scale': 'Dettagli Scale',
+                'codice_fiscale': 'Codice Fiscale'
             };
 
             if (labelMap[key]) {
                 label = labelMap[key];
             }
 
-            html += `<tr><th>${label}</th><td>${formatValue(key, value)}</td></tr>`;
+            const bgClass = isAlt ? 'tw-bg-gray-50' : 'tw-bg-white';
+            html += `<tr class="${bgClass}">
+                <th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase tw-tracking-wider tw-w-1/3">${label}</th>
+                <td class="tw-px-6 tw-py-3 tw-text-sm tw-text-gray-900">${formatValue(key, value)}</td>
+            </tr>`;
+            isAlt = !isAlt;
         }
 
-        html += '</table>';
+        html += '</table></div>';
         detailsContainer.innerHTML = html;
     }
 
     function formatValue(key, value) {
         if (key === 'ascensore') {
-            // Il DB salva 1/0 o 'presente'/'assente'? RequestManager mappa a 1/0, ma controlliamo
-            if (value === '1' || value === 1) return 'Presente';
-            if (value === '0' || value === 0) return 'Assente';
-            return value; // Fallback
+            if (value === '1' || value === 1 || value === true || value === 'presente') return 'Presente';
+            if (value === '0' || value === 0 || value === false || value === 'assente') return 'Assente';
+            return value;
         }
         return value;
     }

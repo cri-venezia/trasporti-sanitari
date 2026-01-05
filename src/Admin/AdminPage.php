@@ -135,6 +135,9 @@ class AdminPage {
 		if ( $screen && (str_starts_with($screen->id, 'toplevel_page_crive-transport-requests') || str_starts_with($screen->id, 'cri-trasporti_page_')) ) {
 			// CSS
 			wp_enqueue_style( 'crive-admin-style', plugins_url( 'assets/css/admin.css', CRI_TRASPORTI_FILE ), [], CRI_TRASPORTI_VERSION );
+			// Font Awesome (CDN per sicurezza in admin)
+			wp_enqueue_style( 'font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', [], '6.5.1' );
+
 			// JS
 			wp_enqueue_script( 'crive-admin-script', plugins_url( 'assets/js/admin.js', CRI_TRASPORTI_FILE ), [], CRI_TRASPORTI_VERSION, true );
 			
@@ -424,26 +427,23 @@ class AdminPage {
 	 * Renderizza il footer delle pagine admin del plugin.
 	 * @return void
 	 */
-	private function render_footer(): void {
-		$plugin_version = defined('CRI_TRASPORTI_VERSION') ? CRI_TRASPORTI_VERSION : 'N/A';
-		echo '<div class="crive-footer-credits">';
-		echo '<p>' . sprintf(
-			/* translators: %s is replaced with the developer's name and mailto link */
-				esc_html__( 'Creato con %1$s da %2$s', 'cri-trasporti' ),
-				'<span style="color: #CC0000;">&hearts;</span>',
-				'<a href="mailto:luca.forzutti@veneto.cri.it">Luca Forzutti</a>'
-			) . '</p>';
-		echo '<p><a href="https://docs.crivenezia.it/cri-trasporti/" target="_blank">' . esc_html__( 'Documentazione', 'cri-trasporti' ) . '</a> | ' . sprintf(esc_html__('Versione %s', 'cri-trasporti'), $plugin_version) . '</p>';
+	public function render_footer(): void {
+		$plugin_data = get_plugin_data( CRI_TRASPORTI_FILE );
+		$plugin_version = $plugin_data['Version'];
+
+		echo '<div class="crive-footer-credits tw-mt-8 tw-pt-4 tw-border-t tw-border-gray-200 tw-text-center tw-text-gray-500 tw-text-sm">';
+		echo '<p>' . sprintf( esc_html__( 'Plugin sviluppato per %s da', 'cri-trasporti' ), '<strong>Croce Rossa Italiana - Comitato di Venezia</strong>' ) . ' <a href="https://ahd-creative.agency/" target="_blank" class="tw-text-blue-600 hover:tw-underline">AHD Creative</a>.</p>';
+		echo '<p><a href="https://docs.crivenezia.it/cri-trasporti/" target="_blank" class="tw-text-blue-600 hover:tw-underline">' . esc_html__( 'Documentazione', 'cri-trasporti' ) . '</a> | ' . sprintf(esc_html__('Versione %s', 'cri-trasporti'), $plugin_version) . '</p>';
 		echo '</div>';
 		
-		// Modal Structure
-		echo '<div id="crive-details-modal" class="crive-modal-overlay">
-			<div class="crive-modal-box">
-				<div class="crive-modal-header">
-					<h2>' . esc_html__('Dettagli Richiesta', 'cri-trasporti') . '</h2>
-					<button type="button" class="crive-modal-close">&times;</button>
+		// Modal Structure (Tailwind Styled)
+		echo '<div id="crive-details-modal" class="crive-modal-overlay tw-hidden tw-fixed tw-inset-0 tw-z-50 tw-bg-black tw-bg-opacity-50 tw-justify-center tw-items-center tw-flex">
+			<div class="crive-modal-box tw-bg-white tw-rounded-lg tw-shadow-2xl tw-w-full tw-max-w-2xl tw-m-4 tw-flex tw-flex-col tw-max-h-[90vh]">
+				<div class="crive-modal-header tw-px-6 tw-py-4 tw-border-b tw-border-gray-100 tw-flex tw-justify-between tw-items-center tw-bg-gray-50 tw-rounded-t-lg">
+					<h2 class="tw-text-xl tw-font-bold tw-text-gray-800 tw-m-0">' . esc_html__('Dettagli Richiesta', 'cri-trasporti') . '</h2>
+					<button type="button" class="crive-modal-close tw-text-gray-400 hover:tw-text-red-600 tw-transition-colors tw-text-2xl tw-leading-none">&times;</button>
 				</div>
-				<div class="crive-modal-body" id="crive-modal-content-body">
+				<div class="crive-modal-body tw-p-6 tw-overflow-y-auto" id="crive-modal-content-body">
 					<!-- Content filled by JS -->
 				</div>
 			</div>
