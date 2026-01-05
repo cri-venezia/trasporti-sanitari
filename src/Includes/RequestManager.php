@@ -48,6 +48,49 @@ class RequestManager
 	}
 
 	/**
+	 * Aggiorna una richiesta di trasporto esistente.
+	 *
+	 * @param int $request_id ID della richiesta da aggiornare.
+	 * @param array $post_data Dati grezzi dal form ($_POST).
+	 * @return bool|WP_Error True in caso di successo, altrimenti un oggetto WP_Error.
+	 */
+	public function update_request(int $request_id, array $post_data): bool|WP_Error
+	{
+		$sanitized_data = $this->sanitize_and_validate_request_data($post_data);
+
+		if (is_wp_error($sanitized_data)) {
+			return $sanitized_data;
+		}
+
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'crive_transport_requests';
+
+		$db_data = [
+			'nome_cognome'        => $sanitized_data['nome_cognome'],
+			'data_trasporto'      => $sanitized_data['data_trasporto'],
+			'recapito_telefonico' => $sanitized_data['recapito_telefonico'],
+			'recapito_email'      => $sanitized_data['recapito_email'],
+			'motivo_trasporto'    => $sanitized_data['motivo_trasporto'],
+			'luogo_intervento'    => $sanitized_data['luogo_intervento'],
+			'indirizzo_intervento' => $sanitized_data['indirizzo_intervento'],
+			'piano'               => $sanitized_data['piano'],
+			'ascensore'           => ($sanitized_data['ascensore'] === 'presente' ? 1 : 0),
+			'larghezza_scale'     => $sanitized_data['dettagli_scale'],
+			'codice_fiscale'      => $sanitized_data['codice_fiscale'],
+			'dettagli_trasporto'  => wp_json_encode($sanitized_data),
+			// Nota: Non aggiorniamo 'created_at' o 'status' qui, a meno che non sia richiesto esplicitamente
+		];
+
+		$result = $wpdb->update($table_name, $db_data, ['id' => $request_id]);
+
+		if ($result === false) {
+			return new WP_Error('db_error', esc_html__('Si è verificato un errore durante l\'aggiornamento della richiesta.', 'cri-trasporti'));
+		}
+
+		return true;
+	}
+
+	/**
 	 * Sanifica e valida i dati di una richiesta.
 	 *
 	 * @param array $post_data Dati grezzi.

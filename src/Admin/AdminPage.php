@@ -187,10 +187,20 @@ class AdminPage {
 			$this->handle_add_new_submission();
 		}
 
-		// Gestione azioni dalla tabella
+		// Gestione invio form "Modifica Richiesta"
+		if ( isset( $_POST['crive_edit_request_nonce'] ) && wp_verify_nonce( $_POST['crive_edit_request_nonce'], 'crive_edit_request' ) ) {
+			$this->handle_edit_submission();
+		}
+
+		// Gestione azioni dalla tabella (GET)
 		if ( ! isset( $this->requests_table ) ) {
-			// Istanzia la tabella per poter accedere a current_action()
 			$this->requests_table = new RequestsListTable();
+		}
+
+		// Controllo azione specifica per la pagina di modifica (non è un'azione bulk della tabella)
+		if ( isset( $_GET['action'] ) && $_GET['action'] === 'edit_request' ) {
+			$this->render_edit_request_page();
+			exit; // Fermiamo l'esecuzione qui per non renderizzare la tabella sotto
 		}
 
 		$action = $this->requests_table->current_action();
@@ -202,6 +212,53 @@ class AdminPage {
 			'delete_request' => $this->handle_delete_request(),
 			default => null,
 		};
+	}
+
+	/**
+	 * Renderizza la pagina di modifica richiesta.
+	 */
+	private function render_edit_request_page(): void {
+		$request_id = isset($_GET['request_id']) ? absint($_GET['request_id']) : 0;
+		if ( ! $request_id ) {
+			wp_die( esc_html__( 'ID Richiesta non valido.', 'cri-trasporti' ) );
+		}
+
+		$request = $this->get_request_by_id($request_id);
+		if ( ! $request ) {
+			wp_die( esc_html__( 'Richiesta non trovata.', 'cri-trasporti' ) );
+		}
+
+		$details = json_decode($request->dettagli_trasporto, true) ?? [];
+
+		include __DIR__ . '/views/edit-request-form.php';
+		
+		$this->render_footer();
+	}
+
+	/**
+	 * Gestisce l'invio del form di aggiornamento richiesta.
+	 */
+	private function handle_edit_submission(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Azione non permessa.', 'cri-trasporti' ) );
+		}
+
+		$request_id = isset($_POST['request_id']) ? absint($_POST['request_id']) : 0;
+		if ( ! $request_id ) {
+			wp_die( esc_html__( 'ID Richiesta mancante.', 'cri-trasporti' ) );
+		}
+
+		$manager = new RequestManager();
+		$result = $manager->update_request($request_id, $_POST);
+
+		if (is_wp_error($result)) {
+			set_transient('crive_admin_notice', ['type' => 'error', 'message' => $result->get_error_message()]);
+		} else {
+			set_transient('crive_admin_notice', ['type' => 'success', 'message' => esc_html__('Richiesta aggiornata con successo.', 'cri-trasporti')]);
+		}
+
+		wp_redirect(admin_url('admin.php?page=crive-transport-requests'));
+		exit;
 	}
 
 	/**

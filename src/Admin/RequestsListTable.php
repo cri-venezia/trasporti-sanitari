@@ -143,6 +143,16 @@ class RequestsListTable extends WP_List_Table {
 			esc_attr__('Vedi Dettagli Rapidi', 'cri-trasporti')
 		);
 
+		// Pulsante Modifica
+		if (current_user_can('manage_options')) {
+			$edit_url = admin_url("admin.php?page={$page_slug}&action=edit_request&request_id=" . $item['id']);
+			$actions[] = sprintf(
+				'<a href="%s" class="button button-secondary" title="%s"><span class="dashicons dashicons-edit" style="margin-top: 3px;"></span></a>',
+				esc_url($edit_url),
+				esc_attr__('Modifica Richiesta', 'cri-trasporti')
+			);
+		}
+
 		// Pulsante Vedi PDF
 		$view_pdf_url = wp_nonce_url(admin_url("admin.php?page={$page_slug}&action=view_pdf&request_id=" . $item['id']), 'crive_view_pdf_' . $item['id']);
 		$actions[] = sprintf('<a href="%s" class="button button-secondary" target="_blank" title="%s">%s</a>', esc_url($view_pdf_url), esc_attr__('Scarica PDF', 'cri-trasporti'), esc_html__('PDF', 'cri-trasporti'));

@@ -51,7 +51,18 @@ jobs:
                   # Crea la directory di build temporanea
                   mkdir -p build/${PLUGIN_SLUG}
                   # Copia i file necessari nell'archivio (escludendo file/cartelle di sviluppo)
-                  rsync -rc --exclude='/.git/' --exclude='/.github/' --exclude='/.editorconfig' --exclude='/bin/' --exclude='/assets/scss/' --exclude='/composer.json' --exclude='/composer.lock' --exclude='/README.md' --exclude='/PREGRESS.md' --exclude='/renovate.json' ./ build/${PLUGIN_SLUG}/
+                  # Aggiungiamo --exclude='/build/' per evitare ricorsione
+                  rsync -rc --exclude='/build/' --exclude='/.git/' --exclude='/.github/' --exclude='/.editorconfig' --exclude='/bin/' --exclude='/assets/scss/' --exclude='/composer.json' --exclude='/composer.lock' --exclude='/README.md' --exclude='/PREGRESS.md' --exclude='/renovate.json' ./ build/${PLUGIN_SLUG}/
+                  
+                  # FORZA la copia di vendor se rsync l'ha saltata (safety check)
+                  if [ -d "vendor" ]; then
+                      echo "Copying vendor directory..."
+                      cp -r vendor build/${PLUGIN_SLUG}/
+                  else
+                      echo "Warning: vendor directory not found!"
+                      exit 1
+                  fi
+                  
                   # Entra nella cartella di build e crea lo zip
                   cd build
                   zip -r ../${ZIP_FILE} ./${PLUGIN_SLUG}
