@@ -108,7 +108,7 @@ class TransportFormWidget extends Widget_Base
 		$form_html .= '</div>';
 
 		$form_html .= '<div class="destination-section" style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px;">';
-		$form_html .= '<h3>' . esc_html__('Luogo di Destinazione', 'cri-trasporti') . '</h3>';
+		$form_html .= '<h2>' . esc_html__('Luogo di Destinazione', 'cri-trasporti') . '</h2>';
 		$form_html .= '<p><label for="indirizzo_destinazione">' . esc_html__('Indirizzo di Destinazione', 'cri-trasporti') . '</label><textarea id="indirizzo_destinazione" name="indirizzo_destinazione" placeholder="' . esc_attr__('Inserisci l\'indirizzo completo di destinazione', 'cri-trasporti') . '" required></textarea></p>';
 		$form_html .= '</div>';
 
