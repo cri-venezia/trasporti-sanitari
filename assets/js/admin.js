@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('crive-details-modal');
     const closeBtn = document.querySelector('.crive-modal-close');
     const detailsContainer = document.getElementById('crive-modal-content-body');
@@ -6,11 +6,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!modal) return;
 
     // Delegate click event for the dynamically generated buttons
-    document.querySelector('.wp-list-table').addEventListener('click', function(e) {
-        if (e.target.classList.contains('view-details-btn')) {
+    document.querySelector('.wp-list-table').addEventListener('click', function (e) {
+        const btn = e.target.closest('.view-details-btn');
+        if (btn) {
             e.preventDefault();
-            const rawData = e.target.getAttribute('data-details');
-            
+            const rawData = btn.getAttribute('data-details');
+
             try {
                 const data = JSON.parse(rawData);
                 populateModal(data);
@@ -22,11 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    closeBtn.addEventListener('click', function() {
+    closeBtn.addEventListener('click', function () {
         modal.classList.remove('open');
     });
 
-    window.addEventListener('click', function(e) {
+    window.addEventListener('click', function (e) {
         if (e.target === modal) {
             modal.classList.remove('open');
         }
@@ -34,13 +35,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function populateModal(data) {
         let html = '<table class="crive-details-table">';
-        
+
         for (const [key, value] of Object.entries(data)) {
             // Salta campi vuoti o tecnici se necessario
             if (value === '' || value === null) continue;
 
             let label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            
+
             // Gestione etichette specifiche
             const labelMap = {
                 'nome_cognome': 'Nome e Cognome',
@@ -61,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             html += `<tr><th>${label}</th><td>${formatValue(key, value)}</td></tr>`;
         }
-        
+
         html += '</table>';
         detailsContainer.innerHTML = html;
     }
