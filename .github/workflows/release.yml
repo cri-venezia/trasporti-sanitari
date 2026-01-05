@@ -28,7 +28,7 @@ jobs:
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: '8.2' # Assicurati che corrisponda al tuo requisito minimo
+                  php-version: '8.4' # Assicurati che corrisponda al tuo requisito minimo
                   extensions: mbstring, zip # Estensioni PHP necessarie
                   coverage: none # Non serve la code coverage
                   tools: composer # Installa Composer
