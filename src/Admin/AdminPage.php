@@ -131,8 +131,14 @@ class AdminPage {
 	 */
 	public function add_admin_styles(): void {
 		$screen = get_current_screen();
-		// Assicura che lo stile venga applicato a tutte le pagine del plugin
-		if ( $screen && (str_starts_with($screen->id, 'toplevel_page_crive-transport-requests') || str_starts_with($screen->id, 'cri-trasporti_page_')) ) { // Aggiornato lo slug qui
+		// Assicura che lo stile venga applicato alle pagine del plugin
+		if ( $screen && (str_starts_with($screen->id, 'toplevel_page_crive-transport-requests') || str_starts_with($screen->id, 'cri-trasporti_page_')) ) {
+			// CSS
+			wp_enqueue_style( 'crive-admin-style', plugins_url( 'assets/css/admin.css', CRI_TRASPORTI_FILE ), [], CRI_TRASPORTI_VERSION );
+			// JS
+			wp_enqueue_script( 'crive-admin-script', plugins_url( 'assets/js/admin.js', CRI_TRASPORTI_FILE ), [], CRI_TRASPORTI_VERSION, true );
+			
+			// Inline style per piccole correzioni legacy (opzionale, se serve ancora)
 			echo '<style>
 				.wp-list-table .column-actions { width: 240px; }
 				.column-actions .button { margin-right: 5px; }
@@ -372,6 +378,19 @@ class AdminPage {
 			) . '</p>';
 		echo '<p><a href="https://docs.crivenezia.it/cri-trasporti/" target="_blank">' . esc_html__( 'Documentazione', 'cri-trasporti' ) . '</a> | ' . sprintf(esc_html__('Versione %s', 'cri-trasporti'), $plugin_version) . '</p>';
 		echo '</div>';
+		
+		// Modal Structure
+		echo '<div id="crive-details-modal" class="crive-modal-overlay">
+			<div class="crive-modal-box">
+				<div class="crive-modal-header">
+					<h2>' . esc_html__('Dettagli Richiesta', 'cri-trasporti') . '</h2>
+					<button type="button" class="crive-modal-close">&times;</button>
+				</div>
+				<div class="crive-modal-body" id="crive-modal-content-body">
+					<!-- Content filled by JS -->
+				</div>
+			</div>
+		</div>';
 	}
 
 	/**

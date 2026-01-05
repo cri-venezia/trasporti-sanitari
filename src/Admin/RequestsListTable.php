@@ -131,9 +131,21 @@ class RequestsListTable extends WP_List_Table {
 		$page_slug = 'crive-transport-requests';
 		$actions = [];
 
+		// Pulsante Visualizzazione Rapida (JS)
+		// codifichiamo i dettagli in JSON per il data-attribute
+		$details_json = $item['dettagli_trasporto'] ?? '{}';
+		// Assicuriamoci che sia un JSON valido, altrimenti defaultiamo a oggetto vuoto
+		if (empty($details_json)) $details_json = '{}';
+		
+		$actions[] = sprintf(
+			'<button type="button" class="button button-secondary view-details-btn" data-details="%s" title="%s"><span class="dashicons dashicons-visibility" style="margin-top: 3px;"></span></button>',
+			esc_attr($details_json),
+			esc_attr__('Vedi Dettagli Rapidi', 'cri-trasporti')
+		);
+
 		// Pulsante Vedi PDF
 		$view_pdf_url = wp_nonce_url(admin_url("admin.php?page={$page_slug}&action=view_pdf&request_id=" . $item['id']), 'crive_view_pdf_' . $item['id']);
-		$actions[] = sprintf('<a href="%s" class="button button-secondary" target="_blank">%s</a>', esc_url($view_pdf_url), esc_html__('PDF', 'cri-trasporti'));
+		$actions[] = sprintf('<a href="%s" class="button button-secondary" target="_blank" title="%s">%s</a>', esc_url($view_pdf_url), esc_attr__('Scarica PDF', 'cri-trasporti'), esc_html__('PDF', 'cri-trasporti'));
 
 		// Pulsante Conferma (condizionale)
 		if ($item['status'] === RequestStatus::Pending->value) {
