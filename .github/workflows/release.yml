@@ -43,7 +43,7 @@ jobs:
 
             # 5. Build Tailwind & Assets
             - name: Setup Node
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v6
               with:
                 node-version: '18'
             
