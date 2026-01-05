@@ -41,18 +41,29 @@ jobs:
             - name: Compile SCSS to CSS
               run: composer compile-sass # Esegue il nostro script di compilazione
 
-            # 5. Crea l'archivio ZIP del plugin
+            # 5. Build Tailwind & Assets
+            - name: Setup Node
+              uses: actions/setup-node@v3
+              with:
+                node-version: '18'
+            
+            - name: Build Frontend Assets
+              run: |
+                npm install
+                npm run build
+
+            # 6. Crea l'archivio ZIP del plugin
             - name: Create plugin archive
               run: |
                   # Nome della cartella del plugin (lo slug)
                   PLUGIN_SLUG="cri-trasporti"
-                  # Nome del file ZIP basato sul tag Git
-                  ZIP_FILE="${PLUGIN_SLUG}-$(echo ${GITHUB_REF#refs/tags/}).zip"
+                  # Nome del file ZIP fisso per facilitare l'update checker
+                  ZIP_FILE="${PLUGIN_SLUG}.zip"
                   # Crea la directory di build temporanea
                   mkdir -p build/${PLUGIN_SLUG}
                   # Copia i file necessari nell'archivio (escludendo file/cartelle di sviluppo)
                   # Aggiungiamo --exclude='/build/' per evitare ricorsione
-                  rsync -rc --exclude='/build/' --exclude='/.git/' --exclude='/.github/' --exclude='/.editorconfig' --exclude='/bin/' --exclude='/assets/scss/' --exclude='/composer.json' --exclude='/composer.lock' --exclude='/README.md' --exclude='/PREGRESS.md' --exclude='/renovate.json' ./ build/${PLUGIN_SLUG}/
+                  rsync -rc --exclude='/build/' --exclude='/node_modules/' --exclude='/assets/css/src/' --exclude='/.git/' --exclude='/.github/' --exclude='/.editorconfig' --exclude='/bin/' --exclude='/assets/scss/' --exclude='/package.json' --exclude='/package-lock.json' --exclude='/tailwind.config.js' --exclude='/composer.json' --exclude='/composer.lock' --exclude='/README.md' --exclude='/PREGRESS.md' --exclude='/renovate.json' ./ build/${PLUGIN_SLUG}/
                   
                   # FORZA la copia di vendor se rsync l'ha saltata (safety check)
                   if [ -d "vendor" ]; then

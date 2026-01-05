@@ -1,0 +1,12 @@
+{
+  "name": "cri-trasporti",
+  "version": "1.0.0",
+  "description": "WordPress plugin for CRI transport requests",
+  "scripts": {
+    "build": "npx tailwindcss -i ./assets/css/src/input.css -o ./assets/css/admin.css",
+    "watch": "npx tailwindcss -i ./assets/css/src/input.css -o ./assets/css/admin.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1"
+  }
+}
