@@ -110,6 +110,7 @@ class RequestManager
 		$data['data_trasporto']   = isset($post_data['data_trasporto']) ? sanitize_text_field(wp_unslash($post_data['data_trasporto'])) : '';
 		$data['recapito_email']   = isset($post_data['recapito_email']) ? sanitize_email(wp_unslash($post_data['recapito_email'])) : '';
 		$data['indirizzo_intervento'] = isset($post_data['indirizzo_intervento']) ? sanitize_textarea_field(wp_unslash($post_data['indirizzo_intervento'])) : '';
+		$data['indirizzo_destinazione'] = isset($post_data['indirizzo_destinazione']) ? sanitize_textarea_field(wp_unslash($post_data['indirizzo_destinazione'])) : '';
 		$data['ascensore']        = isset($post_data['ascensore']) ? sanitize_text_field(wp_unslash($post_data['ascensore'])) : 'assente';
 		$data['trasporto_precedente'] = isset($post_data['trasporto_precedente']) && $post_data['trasporto_precedente'] === 'si' ? 'Sì' : 'No';
 

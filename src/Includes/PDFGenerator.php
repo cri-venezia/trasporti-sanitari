@@ -218,6 +218,13 @@ class PDFGenerator
 			};
 		}
 		$structure['Luogo Intervento'] = $location_details;
+		
+		// Sezione 3.5: Luogo Destinazione
+		if (!empty($data['indirizzo_destinazione'])) {
+			$structure['Luogo Destinazione'] = [
+				'Indirizzo' => $data['indirizzo_destinazione'],
+			];
+		}
 
 		// Sezione 4: Trasporto Precedente (Nuova Sezione)
 		$previous_transport_details = [];

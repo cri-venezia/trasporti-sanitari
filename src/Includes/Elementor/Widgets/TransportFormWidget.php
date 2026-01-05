@@ -107,6 +107,11 @@ class TransportFormWidget extends Widget_Base
 		$form_html .= '<div id="scale-fields" class="conditional-field"><p><label for="dettagli_scale">' . esc_html__('Dettagli Scale', 'cri-trasporti') . '</label><select id="dettagli_scale" name="dettagli_scale"><option value="ampie">' . esc_html__('Ampie', 'cri-trasporti') . '</option><option value="strette">' . esc_html__('Strette', 'cri-trasporti') . '</option></select></p></div>';
 		$form_html .= '</div>';
 
+		$form_html .= '<div class="destination-section" style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px;">';
+		$form_html .= '<h3>' . esc_html__('Luogo di Destinazione', 'cri-trasporti') . '</h3>';
+		$form_html .= '<p><label for="indirizzo_destinazione">' . esc_html__('Indirizzo di Destinazione', 'cri-trasporti') . '</label><textarea id="indirizzo_destinazione" name="indirizzo_destinazione" placeholder="' . esc_attr__('Inserisci l\'indirizzo completo di destinazione', 'cri-trasporti') . '" required></textarea></p>';
+		$form_html .= '</div>';
+
 		$form_html .= '<p><label for="trasporto_precedente">' . esc_html__('Siamo già venuti a prendere il paziente?', 'cri-trasporti') . '</label><select id="trasporto_precedente" name="trasporto_precedente"><option value="no">' . esc_html__('No', 'cri-trasporti') . '</option><option value="si">' . esc_html__('Sì', 'cri-trasporti') . '</option></select></p>';
 		$form_html .= '<div id="attrezzatura-precedente-fields" class="conditional-field"><p><label for="attrezzatura_precedente">' . esc_html__('Quale attrezzatura abbiamo usato?', 'cri-trasporti') . '</label><input type="text" id="attrezzatura_precedente" name="attrezzatura_precedente" placeholder="' . esc_attr__('Es. Sedia portantina, Telo, etc.', 'cri-trasporti') . '"></p></div>';
 
