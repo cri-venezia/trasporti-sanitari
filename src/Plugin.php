@@ -8,6 +8,7 @@ use CRIVenice\Transport\Ajax\AjaxHandler;
 use CRIVenice\Transport\Includes\Assets;
 use CRIVenice\Transport\Includes\Cron;
 use CRIVenice\Transport\Includes\Elementor\Elementor;
+use CRIVenice\Transport\Includes\PublicActionHandler;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -33,6 +34,7 @@ final class Plugin {
 	public readonly AdminPage $admin_page;
 	public readonly Cron $cron;
 	public readonly SettingsPage $settings_page;
+	public readonly PublicActionHandler $public_action_handler;
 
 
 	public static function instance(): Plugin {
@@ -62,8 +64,8 @@ final class Plugin {
 		$this->admin_page = new AdminPage();
 		$this->cron       = new Cron();
 		$this->settings_page = new SettingsPage();
-		$this->public_action_handler = new PublicActionHandler(); // Instantiated PublicActionHandler
-		$this->public_action_handler->init(); // Called init method on PublicActionHandler
+		$this->public_action_handler = new PublicActionHandler();
+		$this->public_action_handler->init();
 	}
 
 	public static function deactivate(): void {
