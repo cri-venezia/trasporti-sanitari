@@ -81,9 +81,12 @@ class RequestManager
 			// Nota: Non aggiorniamo 'created_at' o 'status' qui, a meno che non sia richiesto esplicitamente
 		];
 
-	public function update_request(int $request_id, array $post_data): bool|WP_Error
-	{
-		// ... existing code ...
+		$result = $wpdb->update($table_name, $db_data, ['id' => $request_id]);
+
+		if ($result === false) {
+			return new WP_Error('db_error', esc_html__('Si è verificato un errore durante l\'aggiornamento della richiesta.', 'cri-trasporti'));
+		}
+
 		return true;
 	}
 
