@@ -62,6 +62,8 @@ final class Plugin {
 		$this->admin_page = new AdminPage();
 		$this->cron       = new Cron();
 		$this->settings_page = new SettingsPage();
+		$this->public_action_handler = new PublicActionHandler(); // Instantiated PublicActionHandler
+		$this->public_action_handler->init(); // Called init method on PublicActionHandler
 	}
 
 	public static function deactivate(): void {

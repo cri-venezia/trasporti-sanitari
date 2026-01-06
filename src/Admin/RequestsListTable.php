@@ -139,6 +139,7 @@ class RequestsListTable extends WP_List_Table {
 		
 		$class = match($status) {
 			RequestStatus::Pending => 'tw-bg-yellow-100 tw-text-yellow-800 tw-border-yellow-200',
+			RequestStatus::Processing => 'tw-bg-blue-100 tw-text-blue-800 tw-border-blue-200',
 			RequestStatus::Confirmed => 'tw-bg-green-100 tw-text-green-800 tw-border-green-200',
 		};
 
@@ -187,8 +188,19 @@ class RequestsListTable extends WP_List_Table {
 			esc_attr__('Scarica PDF', 'cri-trasporti')
 		);
 
-		// Pulsante Conferma (condizionale)
+		// Pulsanti Cambio Stato
+		// Da Pending -> Processing
 		if ($item['status'] === RequestStatus::Pending->value) {
+			$processing_url = wp_nonce_url(admin_url("admin.php?page={$page_slug}&action=processing_request&request_id=" . $item['id']), 'crive_processing_' . $item['id']);
+			$actions[] = sprintf(
+				'<a href="%s" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-mr-1 tw-bg-blue-100 tw-text-blue-700 tw-rounded-full hover:tw-bg-blue-200 hover:tw-text-blue-800 tw-transition-colors" title="%s"><i class="fa-solid fa-spinner"></i></a>', 
+				esc_url($processing_url), 
+				esc_html__('Prendi in Carico', 'cri-trasporti')
+			);
+		}
+
+		// Da Pending/Processing -> Confirmed
+		if ($item['status'] !== RequestStatus::Confirmed->value) {
 			$confirm_url = wp_nonce_url(admin_url("admin.php?page={$page_slug}&action=confirm_request&request_id=" . $item['id']), 'crive_confirm_' . $item['id']);
 			$actions[] = sprintf(
 				'<a href="%s" class="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-mr-1 tw-bg-green-50 tw-text-green-600 tw-rounded-full hover:tw-bg-green-100 hover:tw-text-green-700 tw-transition-colors" title="%s"><i class="fa-solid fa-check"></i></a>', 

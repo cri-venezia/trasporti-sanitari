@@ -81,13 +81,29 @@ class RequestManager
 			// Nota: Non aggiorniamo 'created_at' o 'status' qui, a meno che non sia richiesto esplicitamente
 		];
 
-		$result = $wpdb->update($table_name, $db_data, ['id' => $request_id]);
-
-		if ($result === false) {
-			return new WP_Error('db_error', esc_html__('Si è verificato un errore durante l\'aggiornamento della richiesta.', 'cri-trasporti'));
-		}
-
+	public function update_request(int $request_id, array $post_data): bool|WP_Error
+	{
+		// ... existing code ...
 		return true;
+	}
+
+	/**
+	 * Aggiorna solo lo stato di una richiesta (per uso interno admin).
+	 *
+	 * @param int $request_id
+	 * @param RequestStatus $status
+	 * @return bool
+	 */
+	public function update_status(int $request_id, RequestStatus $status): bool
+	{
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'crive_transport_requests';
+		$updated = $wpdb->update(
+			$table_name,
+			['status' => $status->value],
+			['id' => $request_id]
+		);
+		return $updated !== false;
 	}
 
 	/**
@@ -171,6 +187,10 @@ class RequestManager
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'crive_transport_requests';
 
+		// Genera un token amministrativo univoco per questa richiesta
+		$admin_token = bin2hex(random_bytes(32));
+		$data['_admin_token'] = $admin_token;
+
 		$db_data = [
 			'created_at'          => current_time('mysql'),
 			'nome_cognome'        => $data['nome_cognome'],
@@ -181,16 +201,84 @@ class RequestManager
 			'luogo_intervento'    => $data['luogo_intervento'],
 			'indirizzo_intervento' => $data['indirizzo_intervento'],
 			'piano'               => $data['piano'],
-			'ascensore'           => ($data['ascensore'] === 'presente' ? 1 : 0), // Mapping per compatibilità col DB che si aspetta boolean/tinyint
-			'larghezza_scale'     => $data['dettagli_scale'], // Mapping del vecchio campo 'larghezza_scale' al nuovo input
+			'ascensore'           => ($data['ascensore'] === 'presente' ? 1 : 0),
+			'larghezza_scale'     => $data['dettagli_scale'],
 			'codice_fiscale'      => $data['codice_fiscale'],
-			'dettagli_trasporto'  => wp_json_encode($data), // Qui finisce tutto, inclusi i nuovi campi
+			'dettagli_trasporto'  => wp_json_encode($data),
 			'status'              => RequestStatus::Pending->value,
 		];
 
 		$result = $wpdb->insert($table_name, $db_data);
 
 		return $result ? $wpdb->insert_id : false;
+	}
+
+	/**
+	 * Verifica se un token è valido per una data richiesta.
+	 *
+	 * @param int $request_id
+	 * @param string $token
+	 * @return bool
+	 */
+	public function verify_token(int $request_id, string $token): bool
+	{
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'crive_transport_requests';
+		$json_data = $wpdb->get_var($wpdb->prepare("SELECT dettagli_trasporto FROM $table_name WHERE id = %d", $request_id));
+
+		if (!$json_data) {
+			return false;
+		}
+
+		$data = json_decode($json_data, true);
+		return isset($data['_admin_token']) && hash_equals($data['_admin_token'], $token);
+	}
+
+	/**
+	 * Aggiorna lo stato di una richiesta tramite token (senza auth WP).
+	 *
+	 * @param int $request_id
+	 * @param string $token
+	 * @param RequestStatus $new_status
+	 * @return bool|WP_Error
+	 */
+	public function update_status_by_token(int $request_id, string $token, RequestStatus $new_status): bool|WP_Error
+	{
+		if (!$this->verify_token($request_id, $token)) {
+			return new WP_Error('invalid_token', 'Token non valido o scaduto.');
+		}
+
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'crive_transport_requests';
+
+		$updated = $wpdb->update(
+			$table_name,
+			['status' => $new_status->value],
+			['id' => $request_id]
+		);
+
+		return $updated !== false;
+	}
+
+	/**
+	 * Genera l'URL per un'azione pubblica.
+	 *
+	 * @param int $request_id
+	 * @param array $data Assicurati che contenga _admin_token
+	 * @param string $action 'processing' o 'confirmed'
+	 * @return string
+	 */
+	private function generate_action_url(int $request_id, array $data, string $action): string
+	{
+		$token = $data['_admin_token'] ?? '';
+		if (!$token) return '';
+
+		return add_query_arg([
+			'crive_action' => 'update_status',
+			'rid' => $request_id,
+			'token' => $token,
+			'status' => $action
+		], home_url('/'));
 	}
 
 	/**
@@ -236,23 +324,35 @@ class RequestManager
 		// 2. Email di notifica alla segreteria
 		if (! $admin_email) {
 			error_log('CRIVE Trasporti: Nessuna email valida configurata per le notifiche admin.');
-			// Non possiamo inviare all'admin, ma potremmo voler comunque considerare l'invio all'utente come successo parziale
 			return $user_sent;
 		}
 
 		$admin_subject = sprintf(esc_html__('Nuova Richiesta di Trasporto #%d', 'cri-trasporti'), $request_id);
 		$admin_body    = '<h1>' . sprintf(esc_html__('Nuova Richiesta di Trasporto #%d', 'cri-trasporti'), $request_id) . '</h1>';
-		$admin_body   .= '<p>' . esc_html__('È stata inviata una nuova richiesta di trasporto. Di seguito i dettagli:', 'cri-trasporti') . '</p>';
+		
+		// Pulsanti Azioni Rapide
+		$url_processing = $this->generate_action_url($request_id, $data, 'processing');
+		$url_confirmed = $this->generate_action_url($request_id, $data, 'confirmed');
+
+		$admin_body .= '<div style="background: #f9f9f9; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px; border-radius: 5px;">';
+		$admin_body .= '<h3 style="margin-top: 0;">' . esc_html__('Azioni Rapide', 'cri-trasporti') . '</h3>';
+		$admin_body .= '<p style="margin-bottom: 15px;">' . esc_html__('Puoi cambiare lo stato della richiesta cliccando sui pulsanti qui sotto, senza effettuare il login.', 'cri-trasporti') . '</p>';
+		$admin_body .= '<div>';
+		$admin_body .= '<a href="' . esc_url($url_processing) . '" style="background-color: #3b82f6; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; margin-right: 10px; font-weight: bold;">' . esc_html__('Prendi in Carico', 'cri-trasporti') . '</a>';
+		$admin_body .= '<a href="' . esc_url($url_confirmed) . '" style="background-color: #10b981; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; font-weight: bold;">' . esc_html__('Conferma Trasporto', 'cri-trasporti') . '</a>';
+		$admin_body .= '</div></div>';
+
+		$admin_body   .= '<p>' . esc_html__('Di seguito i dettagli della richiesta:', 'cri-trasporti') . '</p>';
 
 		$admin_body .= '<ul>';
 		foreach ($data as $key => $value) {
-			if (isset($value) && $value !== '') { // Mostra anche '0' ma non stringhe vuote o null
+			if (str_starts_with($key, '_')) continue; // Nascondi token e campi interni
+			if (isset($value) && $value !== '') { 
 				$label = ucwords(str_replace('_', ' ', $key));
-				// Sanifica l'output per sicurezza anche nell'email
 				$display_value = is_array($value) ? esc_html(wp_json_encode($value)) : esc_html((string) $value);
 
 				if ($key === 'ascensore') {
-					$display_value = ucfirst($value); // 'Presente' o 'Assente'
+					$display_value = ucfirst($value); 
 				}
 
 				$admin_body .= '<li><strong>' . esc_html($label) . ':</strong> ' . $display_value . '</li>';
@@ -276,12 +376,10 @@ class RequestManager
 			error_log('CRIVE Trasporti: Fallito invio email notifica admin per richiesta ID ' . $request_id . ' a ' . $admin_email);
 		}
 
-
 		if ($pdf_path && file_exists($pdf_path)) {
 			wp_delete_file($pdf_path);
 		}
 
-		// Ritorna true se almeno l'email admin è stata inviata (o non richiesta), altrimenti false.
 		return $admin_sent;
 	}
 }

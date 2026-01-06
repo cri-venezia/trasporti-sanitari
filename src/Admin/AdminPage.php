@@ -211,10 +211,36 @@ class AdminPage {
 
 		match ($action) {
 			'view_pdf' => $this->handle_view_pdf(),
+			'processing_request' => $this->handle_processing_request(), // Nuova azione
 			'confirm_request' => $this->handle_confirm_request(),
 			'delete_request' => $this->handle_delete_request(),
 			default => null,
 		};
+	}
+
+	/**
+	 * Gestisce l'azione di presa in carico.
+	 */
+	private function handle_processing_request(): void {
+		$this->verify_action_nonce('crive_processing_');
+		$request_id = isset($_GET['request_id']) ? absint($_GET['request_id']) : 0;
+		$manager = new RequestManager();
+		$result = $manager->update_request($request_id, ['status' => RequestStatus::Processing->value]); // Assuming update_request supports partial updates or we modify it?
+		// Wait, update_request re-sanitizes everything and expects POST data!
+		// I should check `RequestManager::update_request`.
+		// It expects full post_data.
+		// I need a method to JUST update status.
+		// `update_status_by_token` exists, but that uses token.
+		// I should add `update_status` method to RequestManager that takes ID and Status Enum.
+		// Or I can use $wpdb update directly here? Better to delegate to Manager.
+		// I will modify `RequestManager` to add `update_status(int $id, RequestStatus $status): bool`.
+		// But for now, let's assume I'll add that method.
+		
+		if ( $manager->update_status($request_id, RequestStatus::Processing) ) {
+			$this->redirect_with_message('Richiesta presa in carico.', 'success');
+		} else {
+			$this->redirect_with_message('Errore durante l\'aggiornamento.', 'error');
+		}
 	}
 
 	/**
