@@ -4,7 +4,7 @@
  * Plugin Name:       CRIVE Trasporti
  * Plugin URI:        https://crivenezia.it/
  * Description:       Aggiunge un widget Elementor per inviare richieste di trasporto sanitario al Comitato di Venezia della Croce Rossa Italiana.
- * Version:           1.2.0
+ * Version:           1.2.1
  * Requires at least: 6.0
  * Requires PHP:      8.2
  * Author:            AHDCreative Web Solutions
@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! defined( 'CRI_TRASPORTI_FILE' ) ) {
 	define( 'CRI_TRASPORTI_FILE', __FILE__ );
 	define( 'CRI_TRASPORTI_PATH', plugin_dir_path( __FILE__ ) );
-	define( 'CRI_TRASPORTI_VERSION', '1.2.0' ); // La versione corrente del plugin
+	define( 'CRI_TRASPORTI_VERSION', '1.2.1' ); // La versione corrente del plugin
 }
 
 // 2. Carica l'autoloader di Composer.
