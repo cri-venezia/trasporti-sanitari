@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "12cf88021195d4ecec1d556ec200cbcf",
+    "content-hash": "dfe93892250c0d3f280f16f1831b8f58",
     "packages": [
         {
             "name": "league/uri",
@@ -955,15 +955,15 @@
         },
         {
             "name": "wpackagist-plugin/translatepress-multilingual",
-            "version": "3.0.1",
+            "version": "3.0.7",
             "source": {
                 "type": "svn",
                 "url": "https://plugins.svn.wordpress.org/translatepress-multilingual/",
-                "reference": "tags/3.0.1"
+                "reference": "tags/3.0.7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/translatepress-multilingual.3.0.1.zip"
+                "url": "https://downloads.wordpress.org/plugin/translatepress-multilingual.3.0.7.zip"
             },
             "require": {
                 "composer/installers": "^1.0 || ^2.0"
@@ -978,8 +978,8 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.2"
+        "php": ">=8.4"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
