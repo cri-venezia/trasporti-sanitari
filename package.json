@@ -7,6 +7,6 @@
     "watch": "npx tailwindcss -i ./assets/css/src/input.css -o ./assets/css/admin.css --watch"
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.1"
+    "tailwindcss": "^4.0.0"
   }
 }
